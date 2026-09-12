@@ -1,0 +1,136 @@
+// Life RPG - database schema
+// Run `npx prisma migrate dev --name init` after setting DATABASE_URL in .env
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  createdAt    DateTime @default(now())
+
+  character  Character?
+  tasks      Task[]
+  streak     Streak?
+  rewards    UserReward[]
+  inventory  UserInventory[]
+  badges     UserBadge[]
+}
+
+model Character {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  level     Int      @default(1)
+  xp        Int      @default(0)   // xp earned toward the CURRENT level
+  gold      Int      @default(0)
+  title     String   @default("Explorer")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  attributes Attribute[]
+}
+
+// One row per stat category, e.g. Intellect, Strength, Discipline
+model Attribute {
+  id          String    @id @default(uuid())
+  characterId String
+  character   Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  name        String
+  level       Int       @default(1)
+  xp          Int       @default(0)
+
+  @@unique([characterId, name])
+}
+
+model Task {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  category    String    // maps to an Attribute name, e.g. "Coding", "Fitness"
+  difficulty  String    @default("normal") // easy | normal | hard
+  xpReward    Int       @default(20)
+  goldReward  Int       @default(5)
+  isCompleted Boolean   @default(false)
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+}
+
+model Streak {
+  id                String    @id @default(uuid())
+  userId            String    @unique
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  currentStreak     Int       @default(0)
+  longestStreak     Int       @default(0)
+  lastCompletedDate DateTime?
+}
+
+model Reward {
+  id          String       @id @default(uuid())
+  name        String
+  description String?
+  cost        Int
+  type        String       @default("perk") // perk | theme | title
+  redemptions UserReward[]
+}
+
+model UserReward {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rewardId   String
+  reward     Reward   @relation(fields: [rewardId], references: [id], onDelete: Cascade)
+  redeemedAt DateTime @default(now())
+}
+
+model InventoryItem {
+  id          String          @id @default(uuid())
+  name        String
+  description String?
+  rarity      String          @default("common") // common | uncommon | rare | epic | legendary
+  cost        Int
+  type        String          @default("collectible")
+  owners      UserInventory[]
+}
+
+model UserInventory {
+  id         String        @id @default(uuid())
+  userId     String
+  user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  itemId     String
+  item       InventoryItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  quantity   Int           @default(1)
+  acquiredAt DateTime      @default(now())
+
+  @@unique([userId, itemId])
+}
+
+model Badge {
+  id            String      @id @default(uuid())
+  name          String
+  description   String?
+  criteriaType  String      // "tasks_completed" | "streak_days" | "level_reached"
+  criteriaValue Int
+  owners        UserBadge[]
+}
+
+model UserBadge {
+  id       String   @id @default(uuid())
+  userId   String
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badgeId  String
+  badge    Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+  earnedAt DateTime @default(now())
+
+  @@unique([userId, badgeId])
+}
