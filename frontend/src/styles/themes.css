@@ -1,0 +1,7 @@
+/*
+  Design tokens live in tailwind.config.js (theme.extend.colors / fontFamily).
+  Reserved for a future light/alt theme swap via ThemeContext.
+*/
+:root {
+  --shadow-color: 250 60% 3%;
+}

@@ -10,9 +10,25 @@ function listTasks(userId, filters = {}) {
   });
 }
 
+// FIX: this used to always compute xpReward/goldReward from `difficulty`
+// and ignore any xp/gold values the client sent - but the frontend's
+// quest form lets the user set a custom XP/Gold reward per quest. That's
+// safe to allow here (unlike task COMPLETION, where the reward amount
+// must never come from the client): the user is only setting the value
+// of their OWN quest before it exists, and the value is locked in at
+// creation time - completing it later can't be used to claim more than
+// what was set here. So: honor a client-provided xp/gold if present,
+// otherwise fall back to the difficulty-based default as before.
 function createTask(userId, data) {
   const difficultyMultiplier = { easy: 1, normal: 1.5, hard: 2.5 };
   const mult = difficultyMultiplier[data.difficulty] || 1.5;
+
+  const xpReward = Number.isFinite(Number(data.xp)) && data.xp !== undefined
+    ? Math.max(1, Math.round(Number(data.xp)))
+    : Math.round(20 * mult);
+  const goldReward = Number.isFinite(Number(data.gold)) && data.gold !== undefined
+    ? Math.max(0, Math.round(Number(data.gold)))
+    : Math.round(5 * mult);
 
   return prisma.task.create({
     data: {
@@ -21,8 +37,9 @@ function createTask(userId, data) {
       description: data.description || null,
       category: data.category,
       difficulty: data.difficulty || 'normal',
-      xpReward: Math.round(20 * mult),
-      goldReward: Math.round(5 * mult),
+      xpReward,
+      goldReward,
+      dueDate: data.dueDate ? new Date(data.dueDate) : null,
     },
   });
 }
@@ -48,6 +65,7 @@ async function updateTask(userId, taskId, data) {
       description: data.description,
       category: data.category,
       difficulty: data.difficulty,
+      dueDate: data.dueDate ? new Date(data.dueDate) : undefined,
     },
   });
 }
@@ -59,6 +77,10 @@ async function deleteTask(userId, taskId) {
 
 // The core "game loop" moment: task completion fans out into
 // XP + gold + attribute XP + streak + badge checks, all server-side.
+// The reward amount used here is ALWAYS task.xpReward/task.goldReward -
+// the values locked in at creation - never anything the client sends
+// on this call. That's what keeps completion itself un-cheatable even
+// though creation now allows custom reward values.
 async function completeTask(userId, taskId) {
   const task = await getOwnedTaskOrThrow(userId, taskId);
 

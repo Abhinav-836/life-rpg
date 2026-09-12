@@ -61,6 +61,7 @@ model Task {
   difficulty  String    @default("normal") // easy | normal | hard
   xpReward    Int       @default(20)
   goldReward  Int       @default(5)
+  dueDate     DateTime? // optional - frontend quest scheduling, not enforced server-side
   isCompleted Boolean   @default(false)
   completedAt DateTime?
   createdAt   DateTime  @default(now())

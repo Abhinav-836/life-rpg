@@ -1,0 +1,21 @@
+/* Page-specific overrides beyond Tailwind utilities, if any arise. */
+.quest-bottom-banner {
+  width: 100%;
+  height: 154px;
+  object-fit: cover;
+  object-position: center 40%;
+  border-radius: 12px;
+  display: block;
+}
+
+@media (min-width: 640px) {
+  .quest-bottom-banner {
+    height: 168px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .quest-bottom-banner {
+    height: 185px;
+  }
+}

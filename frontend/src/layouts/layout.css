@@ -1,0 +1,3 @@
+/* Reserved for layout-level overrides that don't fit cleanly as Tailwind
+   utility strings (e.g. complex grid-template-areas for a future dashboard
+   redesign). Empty for now — layouts are built with Tailwind classes. */
