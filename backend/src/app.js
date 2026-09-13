@@ -15,13 +15,18 @@ const badgeRoutes = require('./routes/badge.routes');
 
 const app = express();
 
+// FIX: Render sits behind a reverse proxy, so incoming requests carry an
+// X-Forwarded-For header. Express doesn't trust that header by default,
+// which made express-rate-limit unable to reliably identify per-visitor
+// IPs (the ERR_ERL_UNEXPECTED_X_FORWARDED_FOR warning in the logs).
+// Trusting the first proxy hop (Render's own) fixes this without opening
+// up IP spoofing risk from arbitrary clients.
+app.set('trust proxy', 1);
+
 app.use(cors({ origin: clientOrigin }));
 app.use(express.json());
 app.use(apiLimiter);
 
-// Health check - deploy this route FIRST and confirm it works in
-// production before building anything else. It proves the API is
-// reachable and the database connection is alive.
 app.get('/health', async (req, res) => {
   const prisma = require('./config/database');
   try {

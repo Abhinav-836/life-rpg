@@ -37,6 +37,15 @@ export function AuthProvider({ children }) {
     return session;
   }, []);
 
+  // NEW: backs "Continue as guest" - see auth.api.js / backend
+  // auth.service.js for why this replaced hardcoded login credentials.
+  const guestLogin = useCallback(async () => {
+    const session = await authApi.guestLogin();
+    setUser(session.user);
+    setToken(session.token);
+    return session;
+  }, []);
+
   const logout = useCallback(async () => {
     await authApi.logout();
     setUser(null);
@@ -44,8 +53,8 @@ export function AuthProvider({ children }) {
   }, []);
 
   const value = useMemo(
-    () => ({ user, token, isAuthenticated: !!token, initializing, login, signup, logout }),
-    [user, token, initializing, login, signup, logout]
+    () => ({ user, token, isAuthenticated: !!token, initializing, login, signup, guestLogin, logout }),
+    [user, token, initializing, login, signup, guestLogin, logout]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

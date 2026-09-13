@@ -12,4 +12,10 @@ const login = asyncHandler(async (req, res) => {
   return success(res, result, 200);
 });
 
-module.exports = { signup, login };
+// NEW: no body needed - always finds-or-creates the shared guest account.
+const guestLogin = asyncHandler(async (req, res) => {
+  const result = await authService.guestLogin();
+  return success(res, result, 200);
+});
+
+module.exports = { signup, login, guestLogin };

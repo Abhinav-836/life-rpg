@@ -20,19 +20,21 @@ export async function signup({ name, email, password }) {
   return data;
 }
 
+// NEW: calls the real backend's find-or-create guest endpoint, instead of
+// the old approach of calling login() with hardcoded credentials that
+// never existed in the real database.
+export async function guestLogin() {
+  const data = await request('/auth/guest', { method: 'POST' });
+  persist(data.user, data.token);
+  return data;
+}
+
 export async function logout() {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_KEY);
   return { ok: true };
 }
 
-// FIX: the mock version of this always returned null on refresh (there was
-// no persistence at all), which meant reloading the page always bounced
-// back to the login screen even after a real login. Now it restores the
-// session from localStorage AND verifies the token is still valid against
-// the real backend (via /users/me) rather than trusting a stale token
-// blindly - if the token's expired/invalid, this clears it and the
-// ProtectedRoute below will correctly send the user back to /login.
 export async function getSession() {
   const token = localStorage.getItem(TOKEN_KEY);
   const storedUser = localStorage.getItem(USER_KEY);
