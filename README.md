@@ -59,7 +59,3 @@ npm run dev                # http://localhost:5173
 - **Equipped item state** on the Inventory page is also localStorage-only — the backend tracks ownership and quantity, not an "equipped" flag
 - Both of the above are deliberate scope decisions for the hackathon window, not bugs
 
-## Team
-
-- Backend: [name]
-- Frontend: [name]
