@@ -15,7 +15,6 @@ export default function LoginForm() {
   const [fieldErrors, setFieldErrors] = useState({});
   const [formError, setFormError] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [forgotOpen, setForgotOpen] = useState(false);
 
   function validate() {
     const errors = {};
@@ -72,21 +71,9 @@ export default function LoginForm() {
         </button>
       </div>
 
-      <div className="flex justify-end -mt-1">
-        <button type="button" onClick={() => setForgotOpen(true)} className="text-xs text-purple hover:text-ink">
-          Forgot password?
-        </button>
-      </div>
-
       <Button type="submit" className="w-full" loading={submitting}>
         Enter the realm
       </Button>
-
-      {forgotOpen && (
-        <p role="status" className="text-xs text-ink-muted text-center pt-1">
-          If an account exists for that email, a reset link is on its way.
-        </p>
-      )}
     </form>
   );
 }
