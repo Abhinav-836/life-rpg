@@ -11,7 +11,7 @@ function toReward(reward) {
     name: reward.name,
     description: reward.description,
     category: TYPE_TO_CATEGORY[reward.type] || 'utility',
-    price: reward.cost, // FIX: backend field is `cost`, frontend reads `.price` everywhere
+    price: reward.cost,
     image: reward.type,
   };
 }
@@ -21,11 +21,8 @@ export async function listRewards() {
   return rewards.map(toReward);
 }
 
-// FIX: reshapes the backend's { redemption, character } into the old
-// mock's { reward, item, goldRemaining } shape so PurchaseModal /
-// RewardCard (which check `gold`, price affordability, etc. via the
-// separate useCharacter() query anyway) keep working, and useRewards.js's
-// onSuccess invalidation of ['character'] + ['inventory'] still applies.
+// Returns { reward, item, goldRemaining } for the purchase modal. The
+// character query is refreshed separately by useRewards.
 export async function redeemReward(id) {
   const result = await request('/rewards/redeem', {
     method: 'POST',

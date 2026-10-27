@@ -1,31 +1,7 @@
 import { request, getToken } from './api.js';
 
-const EQUIPPED_KEY = 'lifeRpgEquippedItemIds';
-
-function getEquippedSet() {
-  try {
-    return new Set(JSON.parse(localStorage.getItem(EQUIPPED_KEY) || '[]'));
-  } catch {
-    return new Set();
-  }
-}
-
-function saveEquippedSet(set) {
-  localStorage.setItem(EQUIPPED_KEY, JSON.stringify([...set]));
-}
-
-// FIX: the backend's UserInventory has no "equipped" concept at all
-// (it only tracks ownership + quantity) - there is no column to persist
-// this to. Rather than silently pretending equip/unequip works when it
-// doesn't, this stores equipped state in localStorage as a deliberate,
-// documented client-only cosmetic toggle (it survives refresh, just not
-// a switch to a different device/browser). This is fine for a hackathon:
-// it's cosmetic display state, not the "primary data" the disqualification
-// rules care about persisting server-side - that's tasks/character/user,
-// which all really do round-trip through Postgres.
 export async function listInventory() {
   const owned = await request('/inventory/mine', { token: getToken() });
-  const equipped = getEquippedSet();
 
   return owned.map((entry) => ({
     id: entry.item.id,
@@ -35,32 +11,29 @@ export async function listInventory() {
     category: entry.item.type,
     quantity: entry.quantity,
     acquiredAt: entry.acquiredAt,
-    equipped: equipped.has(entry.item.id),
+    equipped: entry.equipped,
   }));
 }
 
+// Equipped state is saved on the server. Equipping an item puts away any
+// other equipped item of the same type.
 export async function equipItem(id) {
-  const equipped = getEquippedSet();
-  equipped.add(id);
-  saveEquippedSet(equipped);
-  return { id, equipped: true };
+  const owned = await request(`/inventory/${id}/equip`, { method: 'POST', token: getToken() });
+  return { id, equipped: owned.equipped };
 }
 
 export async function unequipItem(id) {
-  const equipped = getEquippedSet();
-  equipped.delete(id);
-  saveEquippedSet(equipped);
-  return { id, equipped: false };
+  const owned = await request(`/inventory/${id}/unequip`, { method: 'POST', token: getToken() });
+  return { id, equipped: owned.equipped };
 }
 
-// NEW: the shop catalog - all purchasable items, regardless of ownership.
+// The shop catalog: every purchasable item, owned or not.
 export async function listShopItems() {
   return request('/inventory', { token: getToken() });
 }
 
-// NEW: spend gold on a shop item. The backend does the gold-check +
-// deduction + inventory write as one transaction (inventory.service.js),
-// so this can never deduct gold without the purchase actually completing.
+// Gold check, deduction and the inventory write happen in one server-side
+// transaction, so gold is never spent without the item arriving.
 export async function purchaseItem(id) {
   const result = await request('/inventory/purchase', {
     method: 'POST',

@@ -1,10 +1,7 @@
 import ShopItem from './ShopItem.jsx';
 import Skeleton from '../../../components/common/Skeleton.jsx';
 
-// NEW: the purchasable catalog (GET /inventory) shown alongside what the
-// user already owns (GET /inventory/mine) - this is what was missing
-// before: there was no way to actually ACQUIRE an inventory item anywhere
-// in the app, so the inventory page could only ever be empty.
+// The shop catalog (GET /inventory), shown below what the player owns.
 export default function ShopGrid({ items, ownedIds, gold, isLoading, onBuy, loading }) {
   if (isLoading) {
     return (

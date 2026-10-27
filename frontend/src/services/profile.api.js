@@ -4,12 +4,9 @@ export async function getProfile() {
   return request('/users/me', { token: getToken() });
 }
 
-// FIX: the backend previously had no way to update a profile at all -
-// this now calls the new PATCH /users/me endpoint (added alongside this
-// fix). Keeps the same client-side validation as before as a fast-fail,
-// but the backend re-validates too (never trust client-side checks alone).
+// Quick client-side checks for instant feedback; the API validates again.
 export async function updateProfile(data) {
-  if (data.name !== undefined && !data.name.trim()) throw new Error('Name cannot be empty.');
+  if (data.name !== undefined && data.name.trim().length < 2) throw new Error('Name must be at least 2 characters.');
   if (data.email !== undefined && !/^\S+@\S+\.\S+$/.test(data.email)) throw new Error('Enter a valid email address.');
 
   const user = await request('/users/me', {
@@ -26,16 +23,20 @@ export async function updateProfile(data) {
   return user;
 }
 
-// FIX: also previously had nowhere to go - now calls the new
-// POST /users/me/password endpoint, which verifies currentPassword
-// server-side before allowing the change.
+// The API verifies the current password before changing it.
 export async function changePassword({ currentPassword, newPassword }) {
   if (!currentPassword) throw new Error('Enter your current password.');
-  if (!newPassword || newPassword.length < 6) throw new Error('New password must be at least 6 characters.');
+  if (!newPassword || newPassword.length < 8) throw new Error('New password must be at least 8 characters.');
 
   return request('/users/me/password', {
     method: 'POST',
     token: getToken(),
     body: { currentPassword, newPassword },
   });
+}
+
+// Permanently deletes the account and all its progress. Demo accounts
+// don't need a password.
+export async function deleteAccount(password) {
+  return request('/users/me', { method: 'DELETE', token: getToken(), body: { password } });
 }

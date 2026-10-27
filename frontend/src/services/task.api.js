@@ -1,12 +1,12 @@
 import { request, getToken } from './api.js';
 import { PRIORITY_TO_DIFFICULTY, DIFFICULTY_TO_PRIORITY } from '../config/constants.js';
+import { toLocalDateKey } from '../utils/dates.js';
 
 // Backend <-> frontend field mapping in one place:
 //   xpReward/goldReward  -> xp/gold        (renamed)
 //   difficulty           -> priority        (see constants.js for the map)
 //   isCompleted          -> status          ('pending' | 'completed')
-//   dueDate              -> dueDate         (pass-through, now that the
-//                                             backend has this column)
+//   dueDate              -> dueDate         (pass-through)
 function toQuest(task) {
   return {
     id: task.id,
@@ -15,7 +15,7 @@ function toQuest(task) {
     priority: DIFFICULTY_TO_PRIORITY[task.difficulty] || 'medium',
     xp: task.xpReward,
     gold: task.goldReward,
-    dueDate: task.dueDate ? task.dueDate.slice(0, 10) : task.createdAt.slice(0, 10),
+    dueDate: task.dueDate ? task.dueDate.slice(0, 10) : toLocalDateKey(task.createdAt),
     status: task.isCompleted ? 'completed' : 'pending',
     createdAt: task.createdAt,
     completedAt: task.completedAt,
@@ -53,6 +53,8 @@ export async function updateQuest(id, data) {
       category: data.category,
       difficulty: data.priority ? PRIORITY_TO_DIFFICULTY[data.priority] : undefined,
       dueDate: data.dueDate,
+      xp: data.xp,
+      gold: data.gold,
     },
   });
   return toQuest(task);
@@ -63,11 +65,8 @@ export async function deleteQuest(id) {
   return { ok: true };
 }
 
-// FIX: the backend's completion response is FLAT
-// ({ task, character, leveledUp, xpToNextLevel, streak, newBadges }) -
-// this reshapes it into the { quest, progression, streak } shape
-// Quests.jsx's handleComplete() actually reads
-// (`result.progression?.leveledUp`, `result.progression.newLevel`).
+// The API returns a flat completion result; the Quests page reads it as
+// { quest, progression, streak }.
 export async function completeQuest(id) {
   const result = await request(`/tasks/${id}/complete`, { method: 'POST', token: getToken() });
   return {

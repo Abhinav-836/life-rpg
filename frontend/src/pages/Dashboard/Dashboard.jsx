@@ -12,6 +12,7 @@ import DailyQuests from './components/DailyQuests.jsx';
 import AttributeOverview from './components/AttributeOverview.jsx';
 import RecentActivity from './components/RecentActivity.jsx';
 import QuickActions from './components/QuickActions.jsx';
+import StreakWarning from '../../components/common/StreakWarning.jsx';
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -26,6 +27,7 @@ export default function Dashboard() {
   return (
     <div>
       <WelcomeHeader name={user?.name} />
+      <StreakWarning />
 
       <div className="space-y-6">
         <CharacterSummary character={character} isLoading={characterLoading} />

@@ -9,14 +9,9 @@ function cumulativeXp(level, xpIntoLevel) {
   return total;
 }
 
-// FIX: the backend models attributes as a growing list of independent
-// {name, level, xp} records - one per task CATEGORY you've ever completed
-// (e.g. "coding", "fitness", "study" - six possible categories). This
-// frontend's Character/Stats pages expect a flat object with exactly the
-// FOUR canonical stats: { strength, intellect, health, discipline }
-// (see src/config/constants.js ATTRIBUTES). QUEST_CATEGORIES already
-// defines which of the 4 stats each of the 6 categories feeds into - this
-// buckets the backend's per-category rows into that shape.
+// The API stores XP per quest category (coding, fitness, study...). The
+// Character and Stats pages show four stats (strength, intellect, health,
+// discipline); QUEST_CATEGORIES says which stat each category feeds.
 function bucketAttributes(rawAttributes) {
   const buckets = Object.fromEntries(ATTRIBUTES.map((a) => [a.id, 0]));
 

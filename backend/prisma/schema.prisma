@@ -1,5 +1,6 @@
 // Life RPG - database schema
-// Run `npx prisma migrate dev --name init` after setting DATABASE_URL in .env
+// Apply with `npx prisma migrate deploy` (production) or
+// `npx prisma migrate dev` (local development).
 
 generator client {
   provider = "prisma-client-js"
@@ -15,6 +16,15 @@ model User {
   email        String   @unique
   passwordHash String
   name         String
+  // Demo accounts created by "Try the demo". Each visitor gets their own,
+  // and they're cleaned up automatically after a few days.
+  isGuest      Boolean  @default(false)
+  // IANA timezone (e.g. "Asia/Kolkata"). Streak days roll over at the
+  // user's local midnight, not UTC midnight.
+  timezone     String   @default("UTC")
+  // App preferences (theme, sound, reminders). Merged with
+  // defaults in src/services/settings.service.js.
+  settings     Json     @default("{}")
   createdAt    DateTime @default(now())
 
   character  Character?
@@ -39,7 +49,7 @@ model Character {
   attributes Attribute[]
 }
 
-// One row per stat category, e.g. Intellect, Strength, Discipline
+// One row per quest category, e.g. coding, fitness, study
 model Attribute {
   id          String    @id @default(uuid())
   characterId String
@@ -57,14 +67,16 @@ model Task {
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   title       String
   description String?
-  category    String    // maps to an Attribute name, e.g. "Coding", "Fitness"
+  category    String    // one of src/config/game.js QUEST_CATEGORIES
   difficulty  String    @default("normal") // easy | normal | hard
   xpReward    Int       @default(20)
   goldReward  Int       @default(5)
-  dueDate     DateTime? // optional - frontend quest scheduling, not enforced server-side
+  dueDate     DateTime?
   isCompleted Boolean   @default(false)
   completedAt DateTime?
   createdAt   DateTime  @default(now())
+
+  @@index([userId, isCompleted])
 }
 
 model Streak {
@@ -100,7 +112,7 @@ model InventoryItem {
   description String?
   rarity      String          @default("common") // common | uncommon | rare | epic | legendary
   cost        Int
-  type        String          @default("collectible")
+  type        String          @default("collectible") // equipment | consumable | collectible
   owners      UserInventory[]
 }
 
@@ -111,6 +123,7 @@ model UserInventory {
   itemId     String
   item       InventoryItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
   quantity   Int           @default(1)
+  equipped   Boolean       @default(false)
   acquiredAt DateTime      @default(now())
 
   @@unique([userId, itemId])

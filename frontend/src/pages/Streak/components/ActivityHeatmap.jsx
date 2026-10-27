@@ -1,10 +1,4 @@
-function lastNDays(n) {
-  return Array.from({ length: n }).map((_, i) => {
-    const d = new Date();
-    d.setDate(d.getDate() - (n - 1 - i));
-    return d.toISOString().slice(0, 10);
-  });
-}
+import { lastNDays } from '../../../utils/dates.js';
 
 export default function ActivityHeatmap({ history }) {
   const days = lastNDays(35);

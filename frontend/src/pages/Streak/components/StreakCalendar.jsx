@@ -1,3 +1,5 @@
+import { toLocalDateKey } from '../../../utils/dates.js';
+
 export default function StreakCalendar({ history }) {
   const now = new Date();
   const year = now.getFullYear();
@@ -5,7 +7,7 @@ export default function StreakCalendar({ history }) {
   const firstDay = new Date(year, month, 1);
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const startOffset = firstDay.getDay();
-  const todayStr = now.toISOString().slice(0, 10);
+  const todayStr = toLocalDateKey(now);
 
   const cells = [...Array(startOffset).fill(null), ...Array.from({ length: daysInMonth }, (_, i) => i + 1)];
 

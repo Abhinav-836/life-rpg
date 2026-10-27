@@ -13,11 +13,18 @@ export const QUEST_PRIORITIES = [
   { id: 'high', label: 'High', weight: 3 },
 ];
 
-// Priority (this frontend's concept) maps onto difficulty (the backend's
-// concept) - the backend has no separate priority column, so we store/
-// read priority through the difficulty field one-to-one.
+// The UI calls it "priority"; the API calls it "difficulty". They map
+// one-to-one.
 export const PRIORITY_TO_DIFFICULTY = { low: 'easy', medium: 'normal', high: 'hard' };
 export const DIFFICULTY_TO_PRIORITY = { easy: 'low', normal: 'medium', hard: 'high' };
+
+// Allowed XP/gold per quest difficulty. Must match
+// backend/src/config/game.js, which enforces the same limits.
+export const REWARD_LIMITS = {
+  easy:   { xp: { min: 5,  max: 50 },  gold: { min: 0, max: 15 }, defaultXp: 20, defaultGold: 5 },
+  normal: { xp: { min: 10, max: 100 }, gold: { min: 0, max: 30 }, defaultXp: 30, defaultGold: 8 },
+  hard:   { xp: { min: 20, max: 200 }, gold: { min: 0, max: 60 }, defaultXp: 50, defaultGold: 13 },
+};
 
 export const ATTRIBUTES = [
   { id: 'strength', label: 'Strength', color: '#F87171' },
@@ -28,12 +35,8 @@ export const ATTRIBUTES = [
 
 export const BADGE_RARITY = ['common', 'rare', 'epic', 'legendary'];
 
-// FIX: this used to be `Math.round(80 * Math.pow(level, 1.35) + 40)` - a
-// DIFFERENT curve than the real backend uses (src/services/xp.service.js
-// on the backend: `Math.floor(100 * Math.pow(level, 1.5))`). That mismatch
-// meant this "preview" would show XP requirements that don't match what
-// actually happens server-side when a character levels up. Now identical
-// to the backend so the two can never drift apart.
+// Same curve as the API (backend/src/services/xp.service.js), so level
+// previews here always match what the server does.
 export function xpForLevel(level) {
   return Math.floor(100 * Math.pow(level, 1.5));
 }

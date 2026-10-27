@@ -15,17 +15,22 @@ const badgeRoutes = require('./routes/badge.routes');
 
 const app = express();
 
-// FIX: Render sits behind a reverse proxy, so incoming requests carry an
-// X-Forwarded-For header. Express doesn't trust that header by default,
-// which made express-rate-limit unable to reliably identify per-visitor
-// IPs (the ERR_ERL_UNEXPECTED_X_FORWARDED_FOR warning in the logs).
-// Trusting the first proxy hop (Render's own) fixes this without opening
-// up IP spoofing risk from arbitrary clients.
+// The API runs behind a hosting proxy that sets X-Forwarded-For. Trusting
+// exactly one hop gives the rate limiter the real visitor IP without
+// letting clients spoof it.
 app.set('trust proxy', 1);
+app.disable('x-powered-by');
 
-app.use(cors({ origin: clientOrigin }));
-app.use(express.json());
+app.use(cors({
+  origin: clientOrigin,
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Timezone'],
+}));
+app.use(express.json({ limit: '100kb' }));
 app.use(apiLimiter);
+
+app.get('/', (req, res) => {
+  res.json({ name: 'Life RPG API', status: 'ok', health: '/health' });
+});
 
 app.get('/health', async (req, res) => {
   const prisma = require('./config/database');
@@ -33,7 +38,7 @@ app.get('/health', async (req, res) => {
     await prisma.$queryRaw`SELECT 1`;
     res.json({ ok: true, db: 'connected' });
   } catch (err) {
-    res.status(500).json({ ok: false, db: 'unreachable' });
+    res.status(503).json({ ok: false, db: 'unreachable' });
   }
 });
 

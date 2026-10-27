@@ -1,56 +1,52 @@
-const prisma = require('../config/database');
+const { calendarDaysBetween } = require('../utils/time');
 
-function startOfUTCDay(date) {
-  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
-}
-
-function daysBetween(a, b) {
-  const MS_PER_DAY = 1000 * 60 * 60 * 24;
-  return Math.round((startOfUTCDay(b) - startOfUTCDay(a)) / MS_PER_DAY);
-}
-
-// Call this once per "activity" (e.g. completing at least one task today).
-// Uses UTC dates throughout to avoid timezone drift between server and user.
-async function recordActivity(userId) {
-  const streak = await prisma.streak.upsert({
+// Records "the user was active today" inside the quest-completion
+// transaction. Days are counted in the user's own timezone.
+async function recordActivity(tx, userId, timeZone, now = new Date()) {
+  const streak = await tx.streak.upsert({
     where: { userId },
     update: {},
     create: { userId },
   });
 
-  const today = new Date();
-
   if (!streak.lastCompletedDate) {
-    return prisma.streak.update({
+    return tx.streak.update({
       where: { userId },
-      data: { currentStreak: 1, longestStreak: 1, lastCompletedDate: today },
+      data: { currentStreak: 1, longestStreak: Math.max(1, streak.longestStreak), lastCompletedDate: now },
     });
   }
 
-  const gap = daysBetween(streak.lastCompletedDate, today);
+  const gap = calendarDaysBetween(streak.lastCompletedDate, now, timeZone);
 
-  if (gap === 0) {
-    // Already logged activity today - no change, just avoids double counting.
-    return streak;
+  if (gap <= 0) {
+    // Already active today: keep the streak, just remember the latest time.
+    return tx.streak.update({ where: { userId }, data: { lastCompletedDate: now } });
   }
 
-  if (gap === 1) {
-    const currentStreak = streak.currentStreak + 1;
-    return prisma.streak.update({
-      where: { userId },
-      data: {
-        currentStreak,
-        longestStreak: Math.max(currentStreak, streak.longestStreak),
-        lastCompletedDate: today,
-      },
-    });
-  }
-
-  // gap > 1 means at least one day was missed - streak resets to 1.
-  return prisma.streak.update({
+  const currentStreak = gap === 1 ? streak.currentStreak + 1 : 1;
+  return tx.streak.update({
     where: { userId },
-    data: { currentStreak: 1, lastCompletedDate: today },
+    data: {
+      currentStreak,
+      longestStreak: Math.max(currentStreak, streak.longestStreak),
+      lastCompletedDate: now,
+    },
   });
 }
 
-module.exports = { recordActivity };
+// The stored currentStreak only changes when a quest is completed, so a
+// player who stopped three days ago would still see their old streak.
+// This returns what the streak really is right now.
+function effectiveStreak(streak, timeZone, now = new Date()) {
+  if (!streak) return { currentStreak: 0, longestStreak: 0, lastCompletedDate: null, activeToday: false };
+  if (!streak.lastCompletedDate) return { ...streak, currentStreak: 0, activeToday: false };
+
+  const gap = calendarDaysBetween(streak.lastCompletedDate, now, timeZone);
+  return {
+    ...streak,
+    currentStreak: gap > 1 ? 0 : streak.currentStreak,
+    activeToday: gap <= 0,
+  };
+}
+
+module.exports = { recordActivity, effectiveStreak };

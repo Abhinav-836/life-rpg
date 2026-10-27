@@ -6,12 +6,7 @@ import LongestStreak from './components/LongestStreak.jsx';
 import StreakCalendar from './components/StreakCalendar.jsx';
 import ActivityHeatmap from './components/ActivityHeatmap.jsx';
 import StreakRewards from './components/StreakRewards.jsx';
-
-function isMissedYesterday(lastActiveDate) {
-  const today = new Date().toISOString().slice(0, 10);
-  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
-  return lastActiveDate !== today && lastActiveDate !== yesterday;
-}
+import StreakWarning from '../../components/common/StreakWarning.jsx';
 
 export default function Streak() {
   const { data: streak, isLoading } = useStreak();
@@ -19,15 +14,16 @@ export default function Streak() {
   if (isLoading) return <Loader label="Checking your streak…" size="lg" />;
   if (!streak) return null;
 
-  const missed = isMissedYesterday(streak.lastActiveDate);
+  const broken = streak.current === 0 && streak.longest > 0;
 
   return (
     <div>
       <StreakHeader />
 
-      {missed && (
-        <div role="status" className="rounded-lg border border-danger/30 bg-danger/10 text-danger text-sm px-4 py-3 mb-6">
-          Your streak is at risk — complete a quest today to keep it alive.
+      <StreakWarning />
+      {broken && (
+        <div role="status" className="rounded-lg border border-white/10 bg-white/5 text-ink-muted text-sm px-4 py-3 mb-6">
+          Your streak reset. Complete a quest today to start a new one — your best is {streak.longest} days.
         </div>
       )}
 

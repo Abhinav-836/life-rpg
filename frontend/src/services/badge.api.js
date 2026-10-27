@@ -1,11 +1,8 @@
 import { request, getToken } from './api.js';
 
-// FIX: the backend only tells you WHICH badges exist (GET /badges) and
-// WHICH ones you own (GET /badges/mine) - it doesn't compute progress
-// toward locked ones. BadgeCard/BadgeDetails need `earned`, `progress`,
-// and `target` per badge to draw the in-progress bar. We compute that
-// here from the same stats the backend's own badge.service.js checks
-// against (tasks completed, longest streak, character level).
+// The API returns which badges exist and which you own. Progress toward
+// locked badges is worked out here from the same stats the server checks
+// (quests completed, longest streak, character level).
 export async function listBadges() {
   const token = getToken();
   const [allBadges, owned, tasks, streak, character] = await Promise.all([

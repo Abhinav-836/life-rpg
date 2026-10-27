@@ -1,9 +1,15 @@
 const router = require('express').Router();
 const { requireAuth } = require('../middleware/auth.middleware');
-const { listItems, myInventory, purchaseItem } = require('../controllers/inventory.controller');
+const {
+  listItems, myInventory, purchaseItem, equipItem, unequipItem,
+} = require('../controllers/inventory.controller');
 
-router.get('/', requireAuth, listItems);
-router.get('/mine', requireAuth, myInventory);
-router.post('/purchase', requireAuth, purchaseItem);
+router.use(requireAuth);
+
+router.get('/', listItems);
+router.get('/mine', myInventory);
+router.post('/purchase', purchaseItem);
+router.post('/:itemId/equip', equipItem);
+router.post('/:itemId/unequip', unequipItem);
 
 module.exports = router;

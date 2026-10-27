@@ -1,4 +1,7 @@
+import { useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
+import { useSettings } from '../hooks/useSettings.js';
+import { setSoundEnabled } from '../utils/sound.js';
 import Sidebar from '../components/Sidebar/Sidebar.jsx';
 import Navbar from '../components/Navbar/Navbar.jsx';
 import MobileNav from '../components/MobileNav/MobileNav.jsx';
@@ -11,6 +14,11 @@ const TREASURE_PAGES = ['/app/rewards', '/app/inventory', '/app/badges'];
 export default function MainLayout() {
   const location = useLocation();
   const isTreasurePage = TREASURE_PAGES.some((path) => location.pathname.startsWith(path));
+  const { data: settings } = useSettings();
+
+  useEffect(() => {
+    if (settings) setSoundEnabled(settings.soundEnabled);
+  }, [settings]);
 
   return (
     <div className="relative min-h-screen text-ink">

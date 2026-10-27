@@ -5,16 +5,8 @@ import { useToast } from '../../../components/common/Toast.jsx';
 import { getErrorMessage } from '../../../utils/errorHandler.js';
 import Button from '../../../components/common/Button.jsx';
 
-// No real OAuth provider is wired up yet — this signs in with a demo
-// character so reviewers/teammates can explore without creating an account,
-// rather than shipping a button that does nothing.
-//
-// FIX: this used to call login({ email: 'guest@liferpg.app', password:
-// 'guestguest' }) - credentials that only ever existed in the old mock
-// database. Against the real backend that account never existed, so this
-// 401'd every single time anyone clicked it. Now calls a dedicated
-// guestLogin() (backed by a real find-or-create endpoint), and shows a
-// toast on failure instead of failing silently.
+// "Try the demo" signs the visitor into their own private demo account
+// (with a few starter quests), so they can explore without signing up.
 export default function SocialLogin() {
   const { guestLogin } = useAuth();
   const navigate = useNavigate();
@@ -44,7 +36,7 @@ export default function SocialLogin() {
         loading={loading} 
         onClick={handleGuest}
       >
-        Continue as guest
+        Try the demo — no sign-up
       </Button>
     </div>
   );

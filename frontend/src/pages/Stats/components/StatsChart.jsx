@@ -1,15 +1,9 @@
-function lastNDays(n) {
-  return Array.from({ length: n }).map((_, i) => {
-    const d = new Date();
-    d.setDate(d.getDate() - (n - 1 - i));
-    return d.toISOString().slice(0, 10);
-  });
-}
+import { lastNDays, toLocalDateKey } from '../../../utils/dates.js';
 
 export default function StatsChart({ quests, days = 7 }) {
   const range = lastNDays(days);
   const counts = range.map(
-    (day) => (quests || []).filter((q) => q.status === 'completed' && q.completedAt === day).length
+    (day) => (quests || []).filter((q) => q.status === 'completed' && q.completedAt && toLocalDateKey(q.completedAt) === day).length
   );
   const max = Math.max(...counts, 1);
 

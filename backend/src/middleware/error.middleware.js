@@ -1,36 +1,36 @@
 const { failure } = require('../utils/response');
 
-// Catch-all error handler. Wire this up LAST in app.js.
+// Catch-all error handler. Registered LAST in app.js.
+// eslint-disable-next-line no-unused-vars
 function errorHandler(err, req, res, next) {
-  console.error(err);
+  // Malformed JSON body or a body over the size limit: the client's fault.
+  if (err.type === 'entity.parse.failed') {
+    return failure(res, 'Request body is not valid JSON', 400);
+  }
+  if (err.type === 'entity.too.large') {
+    return failure(res, 'Request body is too large', 413);
+  }
 
   if (err.code === 'P2002') {
-    // Prisma unique constraint violation
     return failure(res, 'A record with that value already exists', 409);
   }
   if (err.code === 'P2025') {
-    // Prisma "record not found"
     return failure(res, 'Resource not found', 404);
   }
 
-  // FIX: services throughout this app deliberately set `err.status` +
-  // a specific message on intentional rejections (wrong password -> 401,
-  // task not found -> 404, insufficient gold -> 400, duplicate email -> 409,
-  // etc). This handler was ignoring that entirely and always returning a
-  // generic 500 - so every one of those specific errors reached the client
-  // as an unhelpful "something went wrong", even though the server-side
-  // log correctly showed the real reason and status. Now it respects
-  // whatever status/message the throwing code actually set, and only
-  // falls back to a real 500 for genuinely unexpected errors.
-  if (err.status) {
+  // Services throw errors with an explicit status for expected rejections
+  // (wrong password, not enough gold, quest not found...). Pass those
+  // through with their real message.
+  if (err.status && err.status < 500) {
     return failure(res, err.message, err.status);
   }
 
+  console.error(err);
   return failure(res, 'Something went wrong on our end', 500);
 }
 
-// Wrap any async controller with this so thrown errors reach errorHandler
-// instead of crashing the request.
+// Wrap async controllers so thrown errors reach errorHandler instead of
+// crashing the request.
 function asyncHandler(fn) {
   return (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 }

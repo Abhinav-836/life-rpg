@@ -61,14 +61,6 @@ export default function Sidebar() {
             Lv.{character.level} · {character.gold}g
           </div>
         )}
-        {/*
-          FIX: this used to render `{user?.name || 'Profile'}` — so instead of
-          a fixed nav label like every other item above, it showed whatever
-          name the logged-in test account used (e.g. "Guy"). Every other item
-          in this sidebar is a category label, not dynamic data, so this one
-          should be too. The user's actual name is already shown in the
-          TopBar / Profile page — no need to duplicate it here.
-        */}
         <NavLink to="/app/profile" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-gray-300 hover:text-white hover:bg-white/10 transition-colors">
           <span aria-hidden="true">⚙</span> Profile
         </NavLink>

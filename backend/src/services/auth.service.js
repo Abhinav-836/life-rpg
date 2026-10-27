@@ -1,94 +1,109 @@
+const crypto = require('crypto');
 const prisma = require('../config/database');
 const { hashPassword, comparePassword } = require('../utils/password');
 const { signToken } = require('../utils/jwt');
 
-async function signup({ name, email, password }) {
-  const existing = await prisma.user.findUnique({ where: { email } });
-  if (existing) {
-    const err = new Error('An account with that email already exists');
-    err.status = 409;
-    throw err;
-  }
+const SAFE_USER_INCLUDE = { character: true, streak: true };
+const GUEST_RETENTION_DAYS = 7;
 
-  const passwordHash = await hashPassword(password);
+function httpError(message, status) {
+  const err = new Error(message);
+  err.status = status;
+  return err;
+}
+
+function normalizeEmail(email) {
+  return String(email || '').trim().toLowerCase();
+}
+
+function toSession(user) {
+  const { passwordHash: _omit, ...safeUser } = user;
+  return { user: safeUser, token: signToken({ id: user.id, email: user.email }) };
+}
+
+// Case-insensitive so "Abhinav@Mail.com" and "abhinav@mail.com" are the
+// same account (older accounts may have been stored with capitals).
+function findUserByEmail(email) {
+  return prisma.user.findFirst({
+    where: { email: { equals: normalizeEmail(email), mode: 'insensitive' } },
+    include: SAFE_USER_INCLUDE,
+  });
+}
+
+async function signup({ name, email, password }) {
+  if (await findUserByEmail(email)) {
+    throw httpError('An account with that email already exists', 409);
+  }
 
   const user = await prisma.user.create({
     data: {
-      name,
-      email,
-      passwordHash,
+      name: name.trim(),
+      email: normalizeEmail(email),
+      passwordHash: await hashPassword(password),
       character: { create: {} },
       streak: { create: {} },
     },
-    include: { character: true, streak: true },
+    include: SAFE_USER_INCLUDE,
   });
 
-  const token = signToken({ id: user.id, email: user.email });
-  const { passwordHash: _omit, ...safeUser } = user;
-  return { user: safeUser, token };
+  return toSession(user);
 }
 
 async function login({ email, password }) {
-  const user = await prisma.user.findUnique({
-    where: { email },
-    include: { character: true, streak: true },
-  });
-
-  if (!user) {
-    const err = new Error('Invalid email or password');
-    err.status = 401;
-    throw err;
+  const user = await findUserByEmail(email);
+  // Same message for "no such user" and "wrong password" so the login form
+  // can't be used to find out which emails have accounts.
+  if (!user || user.isGuest || !(await comparePassword(password, user.passwordHash))) {
+    throw httpError('Invalid email or password', 401);
   }
-
-  const valid = await comparePassword(password, user.passwordHash);
-  if (!valid) {
-    const err = new Error('Invalid email or password');
-    err.status = 401;
-    throw err;
-  }
-
-  const token = signToken({ id: user.id, email: user.email });
-  const { passwordHash: _omit, ...safeUser } = user;
-  return { user: safeUser, token };
+  return toSession(user);
 }
 
-// NEW: backs the frontend's "Continue as guest" button. That button was
-// calling login() with hardcoded credentials (guest@liferpg.app /
-// guestguest) that only ever existed in the old mock database - against
-// the real database that account never existed, so it 401'd every time
-// (surfaced as a 500 until the error-handler fix, but wrong either way).
+// A few starter quests so a demo visitor lands on a dashboard with
+// something to do instead of an empty screen.
+function starterQuests() {
+  const today = new Date();
+  const inDays = (n) => new Date(today.getTime() + n * 86400000);
+  return [
+    { title: 'Drink a glass of water', category: 'wellness', difficulty: 'easy', xpReward: 20, goldReward: 5, dueDate: today },
+    { title: 'Read 10 pages of a book', category: 'study', difficulty: 'normal', xpReward: 30, goldReward: 8, dueDate: today },
+    { title: '20-minute workout', category: 'fitness', difficulty: 'normal', xpReward: 30, goldReward: 8, dueDate: inDays(1) },
+    { title: 'Ship one small feature', category: 'coding', difficulty: 'hard', xpReward: 50, goldReward: 13, dueDate: inDays(2) },
+  ];
+}
+
+// "Try the demo": every visitor gets their own private demo account.
 //
-// This makes "guest" a real, idempotent backend concept: find the shared
-// demo account, or create it the first time anyone clicks the button.
-// Every guest click after the first reuses the same account and its
-// accumulated progress - which is a perfectly fine demo experience, and
-// means there's nothing hardcoded on the frontend that can drift out of
-// sync with what actually exists in the database again.
-const GUEST_EMAIL = 'guest@liferpg.app';
-
+// A single shared demo account meant every visitor saw (and could edit or
+// complete) every other visitor's quests, and anyone could rename it.
+// Demo accounts can't log in with a password and are deleted after
+// GUEST_RETENTION_DAYS.
 async function guestLogin() {
-  let user = await prisma.user.findUnique({
-    where: { email: GUEST_EMAIL },
-    include: { character: true, streak: true },
+  removeExpiredGuests().catch((err) => console.error('Guest cleanup failed:', err));
+
+  const id = crypto.randomUUID();
+  const user = await prisma.user.create({
+    data: {
+      name: 'Adventurer',
+      email: `guest-${id}@guest.liferpg.local`,
+      passwordHash: await hashPassword(crypto.randomBytes(32).toString('hex')),
+      isGuest: true,
+      character: { create: {} },
+      streak: { create: {} },
+      tasks: { create: starterQuests() },
+    },
+    include: SAFE_USER_INCLUDE,
   });
 
-  if (!user) {
-    const passwordHash = await hashPassword(`guest-${Date.now()}-${Math.random()}`);
-    user = await prisma.user.create({
-      data: {
-        name: 'Guest',
-        email: GUEST_EMAIL,
-        passwordHash,
-        character: { create: {} },
-        streak: { create: {} },
-      },
-      include: { character: true, streak: true },
-    });
-  }
-
-  const token = signToken({ id: user.id, email: user.email });
-  const { passwordHash: _omit, ...safeUser } = user;
-  return { user: safeUser, token };
+  return toSession(user);
 }
 
-module.exports = { signup, login, guestLogin };
+async function removeExpiredGuests() {
+  const cutoff = new Date(Date.now() - GUEST_RETENTION_DAYS * 86400000);
+  const { count } = await prisma.user.deleteMany({
+    where: { isGuest: true, createdAt: { lt: cutoff } },
+  });
+  if (count > 0) console.log(`Removed ${count} expired demo account(s)`);
+}
+
+module.exports = { signup, login, guestLogin, removeExpiredGuests, normalizeEmail };

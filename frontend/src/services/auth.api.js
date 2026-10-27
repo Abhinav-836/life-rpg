@@ -20,9 +20,7 @@ export async function signup({ name, email, password }) {
   return data;
 }
 
-// NEW: calls the real backend's find-or-create guest endpoint, instead of
-// the old approach of calling login() with hardcoded credentials that
-// never existed in the real database.
+// Creates a fresh, private demo account with a few starter quests.
 export async function guestLogin() {
   const data = await request('/auth/guest', { method: 'POST' });
   persist(data.user, data.token);

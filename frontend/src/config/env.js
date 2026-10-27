@@ -1,4 +1,4 @@
 export const env = {
-  apiBaseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api',
-  useMocks: (import.meta.env.VITE_USE_MOCKS ?? 'true') === 'true',
+  // Base URL of the Life RPG API, including the /api prefix.
+  apiBaseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api',
 };

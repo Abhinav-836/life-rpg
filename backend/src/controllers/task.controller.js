@@ -27,11 +27,10 @@ const deleteTask = asyncHandler(async (req, res) => {
   return success(res, { deleted: true });
 });
 
-// This is the endpoint the frontend calls on the checkbox click -
-// it returns everything the UI needs to animate: leveledUp, new XP,
-// updated gold, streak, and any badges just unlocked.
+// Called when the player ticks a quest off. Returns everything the UI
+// needs to animate: level-up, new XP, gold, streak and any new badges.
 const completeTask = asyncHandler(async (req, res) => {
-  const result = await taskService.completeTask(req.user.id, req.params.id);
+  const result = await taskService.completeTask(req.user.id, req.params.id, { timeZone: req.timeZone });
   return success(res, result);
 });
 

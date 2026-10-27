@@ -1,11 +1,14 @@
 {
   "name": "life-rpg-backend",
   "version": "1.0.0",
-  "description": "Backend API for Life RPG - gamified productivity app",
+  "description": "Backend API for Life RPG - a gamified habit and productivity app",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
+    "test": "node --test tests/*.test.js",
+    "migrate": "prisma migrate deploy",
+    "seed": "node prisma/seed.js",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio"
@@ -25,5 +28,8 @@
   },
   "prisma": {
     "seed": "node prisma/seed.js"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }

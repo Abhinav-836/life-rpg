@@ -21,13 +21,13 @@ export function useUnequipItem() {
   });
 }
 
-// NEW: the purchasable shop catalog, separate from what you already own.
+// The purchasable shop catalog, separate from what the player owns.
 export function useShopItems() {
   return useQuery({ queryKey: ['shopItems'], queryFn: inventoryApi.listShopItems });
 }
 
-// NEW: buying spends real gold via the backend - refetch inventory (the
-// new item needs to show up as owned) and character (gold went down).
+// Buying spends gold, so refresh both the inventory (new item) and the
+// character (lower gold balance).
 export function usePurchaseItem() {
   const qc = useQueryClient();
   return useMutation({
