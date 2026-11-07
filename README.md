@@ -1,5 +1,7 @@
 # Life RPG
 
+[![CI](https://github.com/Abhinav-836/life-rpg/actions/workflows/ci.yml/badge.svg)](https://github.com/Abhinav-836/life-rpg/actions/workflows/ci.yml)
+
 Turn your life into a game. Real tasks become quests: finish them to earn XP and gold, level up your character, grow four attributes, keep a daily streak alive, unlock badges and spend gold in the shop.
 
 **Live app:** https://life-rpg-eight-rose.vercel.app
@@ -82,6 +84,12 @@ DATABASE_URL=postgresql://.../life_rpg_test RUN_DB_TESTS=1 npm test
 cd frontend && npm test && npm run lint
 ```
 
+GitHub Actions runs the unit tests and the Postgres integration tests (against a throwaway Postgres 16), plus the frontend lint, tests and build, on every push (`.github/workflows/ci.yml`).
+
 ## Author
 
 Built by [Abhinav Ashutosh](https://github.com/Abhinav-836).
+
+## License
+
+MIT. See [LICENSE](LICENSE).
