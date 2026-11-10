@@ -1,7 +1,7 @@
 import { useSettings, useUpdateSettings } from '../../hooks/useSettings.js';
 import { useToast } from '../../components/common/Toast.jsx';
 import PageHeader from '../../components/common/PageHeader.jsx';
-import Loader from '../../components/common/Loader.jsx';
+import { SettingsSkeleton } from '../../components/common/PageSkeletons.jsx';
 import AccountSettings from './components/AccountSettings.jsx';
 import ThemeSettings from './components/ThemeSettings.jsx';
 import SoundSettings from './components/SoundSettings.jsx';
@@ -13,7 +13,7 @@ export default function Settings() {
   const updateSettings = useUpdateSettings();
   const toast = useToast();
 
-  if (isLoading || !settings) return <Loader label="Loading settings…" size="lg" />;
+  if (isLoading || !settings) return <SettingsSkeleton />;
 
   async function handleThemeChange(theme) {
     await updateSettings.mutateAsync({ theme });

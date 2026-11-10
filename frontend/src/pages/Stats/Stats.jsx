@@ -1,6 +1,6 @@
 import { useCharacter } from '../../hooks/useCharacter.js';
 import { useQuests } from '../../hooks/useTasks.js';
-import Loader from '../../components/common/Loader.jsx';
+import { StatsSkeleton } from '../../components/common/PageSkeletons.jsx';
 import StatsHeader from './components/StatsHeader.jsx';
 import StrengthCard from './components/StrengthCard.jsx';
 import IntellectCard from './components/IntellectCard.jsx';
@@ -16,7 +16,7 @@ export default function Stats() {
   const { data: quests, isLoading: questsLoading } = useQuests();
 
   if (charLoading || questsLoading) {
-    return <Loader label="Tallying the ledger…" size="lg" />;
+    return <StatsSkeleton />;
   }
 
   const completed = (quests || []).filter((q) => q.status === 'completed');

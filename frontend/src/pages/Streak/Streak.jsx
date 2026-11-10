@@ -1,5 +1,5 @@
 import { useStreak } from '../../hooks/useStreak.js';
-import Loader from '../../components/common/Loader.jsx';
+import { StreakSkeleton } from '../../components/common/PageSkeletons.jsx';
 import StreakHeader from './components/StreakHeader.jsx';
 import CurrentStreak from './components/CurrentStreak.jsx';
 import LongestStreak from './components/LongestStreak.jsx';
@@ -11,7 +11,7 @@ import StreakWarning from '../../components/common/StreakWarning.jsx';
 export default function Streak() {
   const { data: streak, isLoading } = useStreak();
 
-  if (isLoading) return <Loader label="Checking your streak…" size="lg" />;
+  if (isLoading) return <StreakSkeleton />;
   if (!streak) return null;
 
   const broken = streak.current === 0 && streak.longest > 0;

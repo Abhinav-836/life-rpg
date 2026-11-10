@@ -2,7 +2,7 @@ import { useAuth } from '../../hooks/useAuth.js';
 import { useCharacter } from '../../hooks/useCharacter.js';
 import { useInventory } from '../../hooks/useInventory.js';
 import PageHeader from '../../components/common/PageHeader.jsx';
-import Loader from '../../components/common/Loader.jsx';
+import { CharacterSkeleton } from '../../components/common/PageSkeletons.jsx';
 import ErrorMessage from '../../components/common/ErrorMessage.jsx';
 import CharacterDisplay from './components/CharacterDisplay.jsx';
 import CharacterStats from './components/CharacterStats.jsx';
@@ -18,7 +18,7 @@ export default function Character() {
     <div>
       <PageHeader eyebrow="Your Hero" title="Character" description="Everything you've earned, all in one place." />
 
-      {isLoading && <Loader label="Summoning your character…" size="lg" />}
+      {isLoading && <CharacterSkeleton />}
       {isError && <ErrorMessage message="Couldn't load your character." onRetry={refetch} />}
 
       {character && (

@@ -1,6 +1,6 @@
 import { useProfile } from '../../hooks/useProfile.js';
 import { useCharacter } from '../../hooks/useCharacter.js';
-import Loader from '../../components/common/Loader.jsx';
+import { ProfileSkeleton } from '../../components/common/PageSkeletons.jsx';
 import ProfileHeader from './components/ProfileHeader.jsx';
 import ProfileAvatar from './components/ProfileAvatar.jsx';
 import AccountStats from './components/AccountStats.jsx';
@@ -11,7 +11,7 @@ export default function Profile() {
   const { data: profile, isLoading } = useProfile();
   const { data: character } = useCharacter();
 
-  if (isLoading) return <Loader label="Loading profile…" size="lg" />;
+  if (isLoading) return <ProfileSkeleton />;
 
   return (
     <div>
