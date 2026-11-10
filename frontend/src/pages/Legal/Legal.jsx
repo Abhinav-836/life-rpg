@@ -29,7 +29,7 @@ export function Privacy() {
   return (
     <Shell title="Privacy policy">
       <p>
-        Life RPG is a free habit tracker built as a game, made by Abhinav Ashutosh (StrattonTrade). This page explains
+        Life RPG is a free habit tracker built as a game, made by Abhinav Ashutosh (Kavorin Tech). This page explains
         what we store and why. We don&rsquo;t sell your data or use it for advertising.
       </p>
 
@@ -65,7 +65,7 @@ export function Terms() {
   return (
     <Shell title="Terms of service">
       <p>
-        These terms cover your use of Life RPG, a free app made by Abhinav Ashutosh (StrattonTrade). By creating an
+        These terms cover your use of Life RPG, a free app made by Abhinav Ashutosh (Kavorin Tech). By creating an
         account, you agree to them.
       </p>
 
