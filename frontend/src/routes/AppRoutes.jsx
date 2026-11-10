@@ -19,6 +19,8 @@ const Inventory = lazy(() => import('../pages/Inventory/Inventory.jsx'));
 const Badges = lazy(() => import('../pages/Badges/Badges.jsx'));
 const Profile = lazy(() => import('../pages/Profile/Profile.jsx'));
 const Settings = lazy(() => import('../pages/Settings/Settings.jsx'));
+const Privacy = lazy(() => import('../pages/Legal/Legal.jsx').then((m) => ({ default: m.Privacy })));
+const Terms = lazy(() => import('../pages/Legal/Legal.jsx').then((m) => ({ default: m.Terms })));
 
 function PageFallback() {
   return (
@@ -33,6 +35,8 @@ export default function AppRoutes() {
     <Suspense fallback={<PageFallback />}>
       <Routes>
         <Route path="/" element={<Landing />} />
+        <Route path="/privacy" element={<Privacy />} />
+        <Route path="/terms" element={<Terms />} />
 
         <Route element={<PublicRoute />}>
           <Route element={<AuthLayout />}>

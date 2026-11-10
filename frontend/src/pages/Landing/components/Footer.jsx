@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom';
+
 export default function Footer() {
   const year = new Date().getFullYear();
   return (
@@ -12,6 +14,10 @@ export default function Footer() {
         >
           Abhinav Ashutosh
         </a>
+        {' · '}
+        <Link to="/privacy" className="underline underline-offset-2 hover:text-white">Privacy</Link>
+        {' · '}
+        <Link to="/terms" className="underline underline-offset-2 hover:text-white">Terms</Link>
       </p>
     </footer>
   );
